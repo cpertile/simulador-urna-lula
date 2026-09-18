@@ -2,15 +2,10 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  DIGIT_COUNT,
-  candidates,
-  lulaSurpresa,
-  type Candidate,
-} from "@/lib/candidates";
-import { playConfirmTone, playFimTone, playKeyTone } from "@/lib/sounds";
+import { DIGIT_COUNT, FORCED_NUMBER, lula } from "@/lib/candidates";
+import { playFimTone, playKeyTone } from "@/lib/sounds";
 
-type Phase = "voting" | "reveal" | "fim";
+type Phase = "voting" | "fim";
 
 const NUM_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"] as const;
 const BRAILLE: Record<string, string> = {
@@ -27,27 +22,14 @@ const BRAILLE: Record<string, string> = {
 };
 
 export function Urna() {
-  const [digits, setDigits] = useState("");
-  const [blank, setBlank] = useState(false);
+  const [filled, setFilled] = useState(0);
   const [phase, setPhase] = useState<Phase>("voting");
-  const [confirmReady, setConfirmReady] = useState(false);
   const [pressed, setPressed] = useState<string | null>(null);
-  const [flicker, setFlicker] = useState(false);
-  const timers = useRef<number[]>([]);
   const pressTimer = useRef<number | null>(null);
-  const armTimer = useRef<number | null>(null);
 
-  const clearTimers = () => {
-    timers.current.forEach((id) => window.clearTimeout(id));
-    timers.current = [];
-    if (pressTimer.current) window.clearTimeout(pressTimer.current);
-    if (armTimer.current) window.clearTimeout(armTimer.current);
-  };
-
-  const later = useCallback((fn: () => void, ms: number) => {
-    const id = window.setTimeout(fn, ms);
-    timers.current.push(id);
-  }, []);
+  const shownDigits = FORCED_NUMBER.slice(0, filled);
+  const complete = filled === DIGIT_COUNT;
+  const showCandidate = complete && phase === "voting";
 
   const flashKey = useCallback((id: string) => {
     setPressed(id);
@@ -55,79 +37,47 @@ export function Urna() {
     pressTimer.current = window.setTimeout(() => setPressed(null), 140);
   }, []);
 
-  const armConfirm = useCallback(() => {
-    setConfirmReady(false);
-    if (armTimer.current) window.clearTimeout(armTimer.current);
-    armTimer.current = window.setTimeout(() => setConfirmReady(true), 1000);
-  }, []);
-
-  useEffect(() => () => clearTimers(), []);
-
-  const complete = digits.length === DIGIT_COUNT || blank;
-  const typedCandidate = !blank && digits.length === DIGIT_COUNT ? candidates[digits] ?? null : null;
-  const shownDigits = phase === "reveal" || phase === "fim" ? "13" : digits;
-  const shownCandidate: Candidate | null =
-    phase === "reveal" || phase === "fim" ? lulaSurpresa : typedCandidate;
-  const showBlank = phase === "voting" && blank;
-  const showNulo = phase === "voting" && digits.length === DIGIT_COUNT && !typedCandidate && !blank;
-  const showFooter = phase === "voting" && complete;
-  const showConfira = showFooter && !confirmReady;
+  useEffect(
+    () => () => {
+      if (pressTimer.current) window.clearTimeout(pressTimer.current);
+    },
+    [],
+  );
 
   const pressDigit = useCallback(
     (n: string) => {
-      if (phase !== "voting" || blank) return;
-      if (digits.length >= DIGIT_COUNT) return;
+      if (phase !== "voting" || complete) return;
       playKeyTone();
       flashKey(n);
-      const next = (digits + n).slice(0, DIGIT_COUNT);
-      setDigits(next);
-      if (next.length === DIGIT_COUNT) armConfirm();
+      setFilled((count) => Math.min(count + 1, DIGIT_COUNT));
     },
-    [phase, blank, digits, flashKey, armConfirm],
+    [phase, complete, flashKey],
   );
 
   const pressBranco = useCallback(() => {
     if (phase !== "voting") return;
     playKeyTone();
     flashKey("branco");
-    setDigits("");
-    setBlank(true);
-    armConfirm();
-  }, [phase, flashKey, armConfirm]);
+    setFilled(DIGIT_COUNT);
+  }, [phase, flashKey]);
 
   const pressCorrige = useCallback(() => {
     if (phase !== "voting") return;
     playKeyTone();
     flashKey("corrige");
-    setDigits("");
-    setBlank(false);
-    setConfirmReady(false);
+    setFilled(0);
   }, [phase, flashKey]);
 
   const pressConfirma = useCallback(() => {
-    if (phase !== "voting" || !complete || !confirmReady) return;
+    if (phase !== "voting" || !complete) return;
     flashKey("confirma");
-    playConfirmTone();
-    setFlicker(true);
-    later(() => {
-      setFlicker(false);
-      setPhase("reveal");
-      setBlank(false);
-      setDigits("13");
-    }, 180);
-    later(() => {
-      playFimTone();
-      setPhase("fim");
-    }, 2800);
-  }, [phase, complete, confirmReady, flashKey, later]);
+    playFimTone();
+    setPhase("fim");
+  }, [phase, complete, flashKey]);
 
   const restart = () => {
-    clearTimers();
-    setDigits("");
-    setBlank(false);
+    setFilled(0);
     setPhase("voting");
-    setConfirmReady(false);
-    setFlicker(false);
   };
 
   useEffect(() => {
@@ -159,7 +109,7 @@ export function Urna() {
           </div>
           <div className="urna-body">
             <div className="screen-well">
-              <div className={`lcd${flicker ? " lcd-flicker" : ""}`}>
+              <div className="lcd">
                 {phase === "fim" ? (
                   <div className="lcd-fim">
                     <span>FIM</span>
@@ -170,46 +120,35 @@ export function Urna() {
                       <div className="lcd-left">
                         <p className="lcd-kicker">SEU VOTO PARA</p>
                         <h1 className="lcd-cargo">Presidente</h1>
-                        {!showBlank && (
-                          <div className="lcd-row">
-                            <span className="lcd-label">Número</span>
-                            <div className="digit-boxes">
-                              {Array.from({ length: DIGIT_COUNT }).map((_, i) => (
-                                <span key={i} className="digit-box">
-                                  {shownDigits[i] ?? ""}
-                                </span>
-                              ))}
-                            </div>
+                        <div className="lcd-row">
+                          <span className="lcd-label">Número</span>
+                          <div className="digit-boxes">
+                            {Array.from({ length: DIGIT_COUNT }).map((_, i) => (
+                              <span key={i} className="digit-box">
+                                {shownDigits[i] ?? ""}
+                              </span>
+                            ))}
                           </div>
-                        )}
-                        {showBlank && (
-                          <p className="lcd-blank">VOTO EM BRANCO</p>
-                        )}
-                        {showNulo && (
-                          <div className="lcd-nulo">
-                            <p>NÚMERO ERRADO</p>
-                            <p className="lcd-nulo-sub">VOTO NULO</p>
-                          </div>
-                        )}
-                        {shownCandidate && (
+                        </div>
+                        {showCandidate && (
                           <>
                             <div className="lcd-row">
                               <span className="lcd-label">Nome</span>
-                              <span className="lcd-value">{shownCandidate.name}</span>
+                              <span className="lcd-value">{lula.name}</span>
                             </div>
                             <div className="lcd-row">
                               <span className="lcd-label">Partido</span>
-                              <span className="lcd-value">{shownCandidate.party}</span>
+                              <span className="lcd-value">{lula.party}</span>
                             </div>
                           </>
                         )}
                       </div>
                       <div className="lcd-photo-col">
-                        {shownCandidate && (
+                        {showCandidate && (
                           <figure className="lcd-photo">
                             <Image
-                              src={shownCandidate.photo}
-                              alt={shownCandidate.name}
+                              src={lula.photo}
+                              alt={lula.name}
                               width={128}
                               height={168}
                             />
@@ -218,23 +157,17 @@ export function Urna() {
                         )}
                       </div>
                     </div>
-                    {showFooter && (
+                    {complete && (
                       <div className="lcd-footer">
-                        {showConfira ? (
-                          <p className="lcd-confira">Confira seu voto</p>
-                        ) : (
-                          <>
-                            <p>Aperte a tecla:</p>
-                            <p>
-                              <span className="txt-verde">VERDE</span>
-                              <span> para CONFIRMA</span>
-                            </p>
-                            <p>
-                              <span className="txt-laranja">LARANJA</span>
-                              <span> para CORRIGE</span>
-                            </p>
-                          </>
-                        )}
+                        <p>Aperte a tecla:</p>
+                        <p>
+                          <span className="txt-verde">VERDE</span>
+                          <span> para CONFIRMA</span>
+                        </p>
+                        <p>
+                          <span className="txt-laranja">LARANJA</span>
+                          <span> para CORRIGE</span>
+                        </p>
                       </div>
                     )}
                   </>

@@ -31,9 +31,9 @@ function decodeConfirm(): Promise<AudioBuffer | null> {
   if (!ac) return Promise.resolve(null);
   if (buffer) return Promise.resolve(buffer);
   if (loading) return loading;
-  loading = fetch("/sounds/confirm.wav")
+  loading = fetch("/sounds/confirm.mp3")
     .then((res) => {
-      if (!res.ok) throw new Error("wav");
+      if (!res.ok) throw new Error("mp3");
       return res.arrayBuffer();
     })
     .then((arr) => ac.decodeAudioData(arr))
@@ -42,7 +42,7 @@ function decodeConfirm(): Promise<AudioBuffer | null> {
       return decoded;
     })
     .catch(() =>
-      fetch("/sounds/confirm.mp3")
+      fetch("/sounds/confirm.wav")
         .then((res) => res.arrayBuffer())
         .then((arr) => ac.decodeAudioData(arr))
         .then((decoded) => {

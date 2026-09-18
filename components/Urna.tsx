@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DIGIT_COUNT, FORCED_NUMBER, lula } from "@/lib/candidates";
 import { playFimTone, playKeyTone } from "@/lib/sounds";
@@ -146,12 +145,7 @@ export function Urna() {
                       <div className="lcd-photo-col">
                         {showCandidate && (
                           <figure className="lcd-photo">
-                            <Image
-                              src={lula.photo}
-                              alt={lula.name}
-                              width={128}
-                              height={168}
-                            />
+                            <img src={lula.photo} alt={lula.name} />
                             <figcaption>Presidente</figcaption>
                           </figure>
                         )}

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DIGIT_COUNT, FORCED_NUMBER, lula } from "@/lib/candidates";
-import { playFimTone, playKeyTone } from "@/lib/sounds";
+import { playFimTone, playKeyTone, preloadSounds } from "@/lib/sounds";
 
 type Phase = "voting" | "fim";
 
@@ -36,12 +36,12 @@ export function Urna() {
     pressTimer.current = window.setTimeout(() => setPressed(null), 140);
   }, []);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    preloadSounds();
+    return () => {
       if (pressTimer.current) window.clearTimeout(pressTimer.current);
-    },
-    [],
-  );
+    };
+  }, []);
 
   const pressDigit = useCallback(
     (n: string) => {

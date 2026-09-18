@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --urna-beige: #d9c7a8;
-  --urna-beige-dark: #c4b08c;
-  --urna-beige-deep: #a8906c;
-  --lcd-bg: #f3f1ea;
+  --urna-beige: #f1eadc;
+  --urna-beige-dark: #e5dccb;
+  --urna-beige-deep: #cfc3ae;
+  --lcd-bg: #f7f5ef;
   --key-dark: #2c2c2c;
 }
 
@@ -16,6 +16,7 @@ html,
 body {
   margin: 0;
   min-height: 100%;
+  overflow-x: hidden;
   background: #1c1a16;
   color: #111;
 }
@@ -33,18 +34,21 @@ body {
 }
 
 .urna-scale {
-  width: min(960px, 100%);
+  width: min(980px, 100%);
+  max-width: 100%;
 }
 
 .urna {
-  background: linear-gradient(180deg, #e4d3b6 0%, var(--urna-beige) 40%, var(--urna-beige-dark) 100%);
+  background: linear-gradient(180deg, #faf6ee 0%, var(--urna-beige) 42%, var(--urna-beige-dark) 100%);
   border-radius: 18px 18px 14px 14px;
   padding: 14px 16px 22px;
   box-shadow:
-    0 1px 0 #f3e6ce inset,
-    0 -8px 16px #00000022 inset,
+    0 1px 0 #fffdf8 inset,
+    0 -8px 16px #00000018 inset,
     0 28px 50px #00000080;
-  border: 1px solid #b49a72;
+  border: 1px solid #d8ccb6;
+  overflow: hidden;
+  max-width: 100%;
 }
 
 .urna-lid {
@@ -63,8 +67,8 @@ body {
 
 .urna-body {
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: 18px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.72fr);
+  gap: 16px;
   align-items: stretch;
 }
 
@@ -72,6 +76,7 @@ body {
   background: #2a2a2a;
   border-radius: 8px;
   padding: 14px 12px 16px;
+  min-width: 0;
   box-shadow:
     0 0 0 2px #1a1a1a,
     8px 8px 16px #00000055 inset,
@@ -104,9 +109,10 @@ body {
 .lcd-main {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 148px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 148px);
   gap: 8px;
   padding: 14px 16px 8px;
+  min-width: 0;
 }
 
 .lcd-kicker {
@@ -251,12 +257,14 @@ body {
 }
 
 .keypad {
-  background: linear-gradient(180deg, #cbb892 0%, #b89e74 100%);
+  background: linear-gradient(180deg, #ebe3d2 0%, #ddd2be 100%);
   border-radius: 10px;
-  padding: 16px 18px 18px;
+  padding: 14px 12px 16px;
+  min-width: 0;
+  width: 100%;
   box-shadow:
-    0 2px 0 #efe0c4 inset,
-    0 10px 18px #00000033 inset;
+    0 2px 0 #f8f3e8 inset,
+    0 10px 18px #00000022 inset;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -265,9 +273,11 @@ body {
 
 .num-grid {
   display: grid;
-  grid-template-columns: repeat(3, 72px);
-  gap: 10px 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 10px;
   justify-content: center;
+  width: 100%;
+  max-width: 248px;
 }
 
 .key {
@@ -288,8 +298,10 @@ body {
 }
 
 .key-num {
-  width: 72px;
-  height: 58px;
+  width: 100%;
+  height: auto;
+  min-height: 48px;
+  aspect-ratio: 72 / 58;
   border-radius: 10px;
   background: radial-gradient(circle at 50% 28%, #4a4a4a, var(--key-dark) 70%);
   color: #fff;
@@ -355,9 +367,9 @@ body {
 
 .nova {
   appearance: none;
-  border: 1px solid #cbb892;
+  border: 1px solid #d9cdb8;
   background: transparent;
-  color: #e8dcc4;
+  color: #ece4d4;
   font: 600 14px Tahoma, Arial, sans-serif;
   padding: 8px 16px;
   border-radius: 999px;
@@ -365,7 +377,7 @@ body {
 }
 
 .nova:hover {
-  background: #cbb89222;
+  background: #d9cdb822;
 }
 
 .disclaimer {
@@ -375,7 +387,11 @@ body {
   text-align: center;
 }
 
-@media (max-width: 820px) {
+@media (orientation: portrait) {
+  .urna-scale {
+    width: min(520px, 100%);
+  }
+
   .urna-body {
     grid-template-columns: 1fr;
   }
@@ -386,5 +402,65 @@ body {
 
   .keypad {
     padding-bottom: 22px;
+  }
+}
+
+@media (orientation: landscape) {
+  .urna-body {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.72fr);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .booth {
+    padding: 8px 10px 12px;
+    gap: 10px;
+  }
+
+  .urna {
+    padding: 8px 10px 12px;
+  }
+
+  .urna-lid {
+    padding: 0 8px 6px;
+  }
+
+  .lcd {
+    min-height: 0;
+  }
+
+  .lcd-main {
+    grid-template-columns: 1fr minmax(0, 118px);
+    padding: 8px 10px 6px;
+  }
+
+  .lcd-cargo {
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+
+  .lcd-photo img,
+  .lcd-photo :is(img) {
+    height: 112px !important;
+  }
+
+  .lcd-fim span {
+    font-size: 64px;
+  }
+
+  .key-num {
+    min-height: 34px;
+  }
+
+  .key-branco,
+  .key-corrige,
+  .key-confirma {
+    height: 36px;
+    font-size: 12px;
+  }
+
+  .key-confirma {
+    height: 42px;
+    font-size: 14px;
   }
 }

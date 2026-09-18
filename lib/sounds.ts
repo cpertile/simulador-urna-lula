@@ -1,4 +1,5 @@
 let ctx: AudioContext | null = null;
+let fimAudio: HTMLAudioElement | null = null;
 
 function audio(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -24,18 +25,22 @@ function beep(frequency: number, start: number, duration: number, gain = 0.12, t
   osc.stop(ac.currentTime + start + duration + 0.02);
 }
 
+export function preloadSounds() {
+  if (typeof window === "undefined") return;
+  if (!fimAudio) {
+    fimAudio = new Audio("/sounds/confirm.mp3");
+    fimAudio.preload = "auto";
+  }
+}
+
 export function playKeyTone() {
   beep(880, 0, 0.07, 0.06, "square");
 }
 
-export function playConfirmTone() {
-  beep(1480, 0, 0.12, 0.14, "square");
-}
-
 export function playFimTone() {
-  const notes = [1568, 1568, 1865, 1568, 2093, 1865, 1568];
-  notes.forEach((freq, i) => {
-    beep(freq, i * 0.11, 0.1, 0.16, "square");
-  });
-  beep(2489, 0.82, 0.35, 0.18, "square");
+  preloadSounds();
+  if (!fimAudio) return;
+  fimAudio.pause();
+  fimAudio.currentTime = 0;
+  void fimAudio.play();
 }

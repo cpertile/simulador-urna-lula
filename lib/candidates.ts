@@ -5,5 +5,5 @@ export const lula = {
   number: FORCED_NUMBER,
   name: "LULA",
   party: "PT",
-  photo: "/lula-chapeuzinho.png",
+  photo: "/lula-chapeuzinho.jpg",
 };

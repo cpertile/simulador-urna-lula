@@ -1,5 +1,6 @@
 let ctx: AudioContext | null = null;
-let fimAudio: HTMLAudioElement | null = null;
+let buffer: AudioBuffer | null = null;
+let loading: Promise<AudioBuffer | null> | null = null;
 
 function audio(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -25,12 +26,45 @@ function beep(frequency: number, start: number, duration: number, gain = 0.12, t
   osc.stop(ac.currentTime + start + duration + 0.02);
 }
 
+function decodeConfirm(): Promise<AudioBuffer | null> {
+  const ac = audio();
+  if (!ac) return Promise.resolve(null);
+  if (buffer) return Promise.resolve(buffer);
+  if (loading) return loading;
+  loading = fetch("/sounds/confirm.wav")
+    .then((res) => {
+      if (!res.ok) throw new Error("wav");
+      return res.arrayBuffer();
+    })
+    .then((arr) => ac.decodeAudioData(arr))
+    .then((decoded) => {
+      buffer = decoded;
+      return decoded;
+    })
+    .catch(() =>
+      fetch("/sounds/confirm.mp3")
+        .then((res) => res.arrayBuffer())
+        .then((arr) => ac.decodeAudioData(arr))
+        .then((decoded) => {
+          buffer = decoded;
+          return decoded;
+        }),
+    )
+    .catch(() => null);
+  return loading;
+}
+
 export function preloadSounds() {
-  if (typeof window === "undefined") return;
-  if (!fimAudio) {
-    fimAudio = new Audio("/sounds/confirm.mp3");
-    fimAudio.preload = "auto";
-  }
+  void decodeConfirm();
+}
+
+function playBuffer(decoded: AudioBuffer) {
+  const ac = audio();
+  if (!ac) return;
+  const src = ac.createBufferSource();
+  src.buffer = decoded;
+  src.connect(ac.destination);
+  src.start();
 }
 
 export function playKeyTone() {
@@ -38,9 +72,13 @@ export function playKeyTone() {
 }
 
 export function playFimTone() {
-  preloadSounds();
-  if (!fimAudio) return;
-  fimAudio.pause();
-  fimAudio.currentTime = 0;
-  void fimAudio.play();
+  const ac = audio();
+  if (ac && ac.state === "suspended") void ac.resume();
+  if (buffer) {
+    playBuffer(buffer);
+    return;
+  }
+  void decodeConfirm().then((decoded) => {
+    if (decoded) playBuffer(decoded);
+  });
 }

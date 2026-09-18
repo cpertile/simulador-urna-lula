@@ -108,11 +108,19 @@ body {
 
 .lcd-main {
   flex: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 148px);
-  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px 16px;
   padding: 14px 16px 8px;
   min-width: 0;
+}
+
+.lcd-left {
+  flex: 1 1 180px;
+  min-width: 180px;
+  position: relative;
+  z-index: 1;
 }
 
 .lcd-kicker {
@@ -188,11 +196,15 @@ body {
   display: flex;
   justify-content: flex-end;
   padding-top: 6px;
+  flex: 0 0 120px;
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
 }
 
 .lcd-photo {
   margin: 0;
-  width: 132px;
+  width: 120px;
   border: 2px solid #111;
   background: #fff;
 }
@@ -430,8 +442,20 @@ body {
   }
 
   .lcd-main {
-    grid-template-columns: 1fr minmax(0, 118px);
     padding: 8px 10px 6px;
+  }
+
+  .lcd-left {
+    min-width: 140px;
+    flex-basis: 140px;
+  }
+
+  .lcd-photo-col,
+  .lcd-photo {
+    width: 96px;
+    min-width: 96px;
+    max-width: 96px;
+    flex-basis: 96px;
   }
 
   .lcd-cargo {
